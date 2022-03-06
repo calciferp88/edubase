@@ -26,6 +26,9 @@ import { Avatar } from '@material-ui/core';
 import Dropdown from '@material-tailwind/react/Dropdown';
 import DropdownItem from '@material-tailwind/react/DropdownItem';
 
+// truncate
+import Truncate from 'react-truncate';
+
 
 // For firebase
 import { 
@@ -308,6 +311,15 @@ function TrendingPost({id, idea}) {
             commentCount : increment_no,
         });
 
+        await addDoc(collection(db, "notification"), {
+            authorEmail : idea.staffEmail,
+            commenterEmail : user.email,
+            status: 0, // unseen status
+            type : 0, // for author and commenter
+            ideaID : cmtid, //for link
+            timestamp: serverTimestamp(),
+        });
+
         setLoading(false);
         setIsOpen(false);
         toast.success("Replied your comment", 
@@ -534,7 +546,7 @@ function TrendingPost({id, idea}) {
                             {/* comment */}
                             {
                                 categories.map((category) => (
-                                    todayDate < new Date(category.finalClosureDate.seconds*1000).toLocaleDateString() ? (
+                                    todayDate > new Date(category.finalClosureDate.seconds*1000).toLocaleDateString() ? (
                                         <div 
                                         onClick={() => {
                                             setCmtid(id)
@@ -702,7 +714,9 @@ function TrendingPost({id, idea}) {
                                                     <Moment fromNow>{idea?.ideaDate?.toDate()}</Moment>
                                                 </span>
                                                 <p className='text-[#5c5c5c] text-[15px] sm:text-base'>
-                                                    {idea?.idea}
+                                                <Truncate lines={2}>
+                                                    { idea?.idea }
+                                                </Truncate>
                                                 </p>
                                             </div>
                                         </div>

@@ -30,8 +30,10 @@
     "react-redux": "^7.2.6",
     "react-router-dom": "^6.2.1",
     "react-scripts": "5.0.0",
+    "react-scroll-to-top": "^1.0.8",
     "react-to-print": "^2.14.4",
     "react-toastify": "^8.1.0",
+    "react-truncate": "^2.4.0",
     "tailwind-scrollbar-hide": "^1.1.7",
     "yup": "^0.32.11"
   },

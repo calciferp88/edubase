@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { HomeIcon, SearchIcon } from "@heroicons/react/solid";
+import { BellIcon } from "@heroicons/react/outline";
 import {
     HashtagIcon,
     UserIcon,
@@ -20,16 +21,46 @@ import ModalHeader from "@material-tailwind/react/ModalHeader";
 import ModalBody from "@material-tailwind/react/ModalBody";
 import ModalFooter from "@material-tailwind/react/ModalFooter";
 import Button from '@material-tailwind/react/Button';
+// For firebase
+import { 
+    collection, 
+    addDoc,
+    getDocs, 
+    serverTimestamp,
+    orderBy, 
+    query,
+    updateDoc,
+    deleteDoc,
+    doc,
+    where,
+    onSnapshot
+} from 'firebase/firestore';
+import { db } from '../../config';
+
 
 function Sidebar() {
 
     const navigate = useNavigate();
+    const user = useSelector(selectUser);
     const [ loading, setLoading ] = useState(false);
     const [showModal1, setShowModal1] = useState(false); //confirmation dialog
-
+    const [ notifications, setNotifications ] = useState([]); // to count noti counts
 
     const dispatch = useDispatch();
-    const user = useSelector(selectUser);
+    
+    // reterive own notification
+    useEffect(() =>{
+        if(user){
+            onSnapshot(
+                query(collection(db, "notification"), where("authorEmail", "==", user?.email), where("status", "==", 0)),
+                    (snapshot) => {
+                        setNotifications(snapshot.docs.map((doc) => ({
+                            ...doc.data(), id: doc.id
+                        })));
+                    }   
+                )
+        }
+    }, [db, user]);
 
     // Logout
     const Logout = () => {
@@ -102,11 +133,16 @@ function Sidebar() {
                         <NavLink
                             exact
                             activeClassName="active"
-                            to="/more"
+                            to="/notifications"
                             className="flex items-center gap-4 text-md font-light px-4 py-3 rounded-lg"
-                        >
-                            <DotsHorizontalIcon className='h-5'/>
-                            <span className='xl:inline sm:hidden'>More</span>
+                            >
+                                <BellIcon className='h-5'/>
+                                <span className='xl:inline sm:hidden flex items-center'>
+                                Notifications 
+                                <span className='shadow-sm bg-pink-500 text-sm pt-[1px] w-[20px] h-[20px] text-center rounded-xl ml-2 text-white'>
+                                    {notifications.length}
+                                </span>
+                            </span>
                         </NavLink>
                     </li>
                 </ul>

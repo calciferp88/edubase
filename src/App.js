@@ -5,6 +5,7 @@ import '@material-tailwind/react/tailwind.css';
 
 import LoginFirst from './pages/LoginFirst';
 import Dashboard from './pages/dashboard/Dashboard';
+import Mails from './pages/dashboard/Mails';
 import Categories from './pages/dashboard/Categories';
 import Departments from './pages/dashboard/Departments';
 import Home from './pages/newsfeed/Home';
@@ -27,6 +28,7 @@ import { auth } from "./config";
 import IdeaEdit from './pages/newsfeed/IdeaEdit';
 import Trending from './pages/newsfeed/Trending';
 import Ideas from './pages/dashboard/Ideas';
+import Notifications from './pages/newsfeed/Notifications';
 
 
 
@@ -74,6 +76,7 @@ function App() {
               <>  
                 <Route path='/' element={<Home/>} />
                 <Route path="/share" element={<Share/>} />
+                <Route path="/notifications" element={<Notifications/>} />
                 <Route path="/explore" element={<Trending/>} />
                 <Route path="/idea/:ideaId" element={<IdeaDetail/>} />
                 <Route path="/edit" element={<IdeaEdit/>} />
@@ -91,6 +94,7 @@ function App() {
                 <Route path="/admin-staffs-edit" element={<AdminStaffEdit/>} />
                 <Route path="/general-staffs" element={<GeneralStaffs/>} />
                 <Route path='/general-staffs-edit' element={<GeneralStaffEdit/>} />
+                <Route path="/mails" element={<Mails/>} />
         
         
                 <Route path="/*" element={<Pagenotfound/>} />

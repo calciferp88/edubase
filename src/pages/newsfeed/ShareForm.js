@@ -32,12 +32,15 @@ import {
     addDoc,
     collection,
     doc,
+    setDoc,
     serverTimestamp,
     updateDoc,
     onSnapshot,
     getDoc,
     query,
     where,
+    increment,
+    
 } from "firebase/firestore";
 
 import { db, storage } from "../../config";
@@ -64,6 +67,8 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
 
     const user = useSelector(selectUser);  // user
     const [ username, setUsername ] = useState([]);  // to display username from redux
+    const email = user.email; // to get email from redux
+    const role = email.split("edubase.")[1]; // to check email
 
     const [showdad, setShowdad] = useState(false); // drag and drop file show/hide
     const [ loading, setLoading ] = useState(false); // loading status
@@ -77,13 +82,35 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
     const [ input, setInput ] = useState(""); // idea text input
     const [ selectedVisibility, setSelectedVisiblity ] = useState(visibility[0]); // selectedVisiblity.name
     const filePickerRef = useRef(null); // file input ref (image)
+    
+    const [ staffdepartment, setStaffdepartment ] = useState(); 
+    const [ departmentid, setDepartmentid ] = useState([]);
+    const [ gotit, setGotit ] = useState();
 
+    const [ contributed, setContributed ]= useState(false); // to check contributed or not
+    const [ contributors, setContributors ] = useState([]); // to count contributors amount
+
+    const [ autdept, setAutdept ] = useState(""); // to insert login user department for notification collectin
+
+    // render current user department
+    useEffect(() => {
+        username.map((uname) => (
+            setAutdept(uname.staffDepartment)
+        ))
+    },[username]);
 
     // Terms and condition handleChange
     const handleChangeT = (e) => {
         setChecked(e.target.checked);
         setShowModal(true);
     }  
+
+    // rolecheck
+    useEffect(() =>{
+        if(role === "qam"){
+            navigate('/');
+        }
+    }, []);
 
     // user name display from redux + firestore
     useEffect(() =>{
@@ -98,6 +125,35 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
         );
 
     }, [db]);
+
+    // staff department
+    useEffect(() => {
+            username.map((uname) => (
+                setStaffdepartment(uname.staffDepartment)
+            ))  
+    }, [username]);
+
+    
+    // staff department id
+    useEffect(() => {
+        username.map((uname) => (
+            onSnapshot(
+            query(collection(db, "department"), where("departmentName", "==", uname.staffDepartment)),
+                (snapshot) => {
+                    setDepartmentid(snapshot.docs.map((doc) => ({
+                        ...doc.data(), id: doc.id
+                    })));
+                }   
+            )
+        ))  
+    }, [username]); 
+
+    // not array department id
+    useEffect(()=>{
+        departmentid.map((deptid) => (
+            setGotit(deptid.id)
+        ))
+    }, [departmentid]);
 
 
     // Emoji choose
@@ -121,7 +177,6 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
         };
     };
 
-
     // for file d&d
     const handleChange = (file) => {
         setFilename(file);
@@ -135,6 +190,27 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
     };
 
 
+
+    // -------------- contributorssss -------
+
+    // to retrieve contributors amount
+    useEffect(() => {
+        if(gotit){
+            onSnapshot(collection(db, "department", gotit, "contributor"), (snapshot) => {
+                setContributors(snapshot.docs.map((doc) => ({
+                    ...doc.data(), id: doc.id
+                }))); 
+            })
+        }
+    }, [gotit]);
+
+    // to retrieve contributed or not
+    useEffect(() => {
+        setContributed(
+            contributors.findIndex((contri) => contri.id === user.uid ) !== -1
+        )
+    }, [contributors]);
+
     // SHARE IDEA
     const shareIdea = async() =>  {
         setLoading(true);
@@ -146,6 +222,7 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
             anonymousStatus: selectedVisibility.name,
             staffID: user.uid,
             staffEmail: user.email,
+            staffDepartment: staffdepartment,
             categoryID: categoryid,
             categoryName: categoryname,
             thumbupCount: 0,
@@ -154,6 +231,30 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
             commentCount: 0,
             ideaStatus: false,
         });
+
+
+        const increment_no = increment(1);
+
+        // increse in department
+        await updateDoc(doc(db, "department", gotit ), {
+            ideaCount : increment_no,
+        });
+
+        
+
+        // contributor sub doc
+        if(!contributed){
+            // contributor count
+            await updateDoc(doc(db, "department", gotit ), {
+                contributor : increment_no,
+            }); 
+            
+            await setDoc(doc(db, "department", gotit, "contributor", user.uid ), {
+                contributorEmail : user.email,
+            });
+        }
+
+      
 
         // image and document refs
         const imageRef = ref(storage, `idea/${docRef.id}/image`);
@@ -177,8 +278,22 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
                 await updateDoc(doc(db, "idea", docRef.id), {
                     document: downloadURL,
                 });  
+
+                
+
             });
         }
+
+        // add to notification
+        await addDoc(collection(db, "notification-2"), {
+            authorEmail : user.email, // loggin user
+            status: 0, // unseen status
+            idea: input,
+            department: autdept,
+            timestamp: serverTimestamp(),
+        });
+
+        
 
         setLoading(false);
         toast.success("Your idea was shared", 
@@ -224,6 +339,7 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
                                     <h4 className='font-bold -mt-2 text-gray-800'>
                                         {uname.staffName}
                                     </h4>
+                                    
                                 ))
                             }
                             <span className='text-sm -mt-2 ml-2 text-gray-600'>| &nbsp; {user.email}</span>
@@ -410,7 +526,7 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
                     <button 
                         onClick={shareIdea}
                         className="bg-[#1d9bf0] text-white rounded-full px-4 py-1.5 font-bold shadow-md hover:bg-[#1a8cd8] disabled:bg-gray-300 disabled:cursor-default"
-                        disabled={!checked || !input}
+                        disabled={!checked || !input || loading}
                     >
                         {
                             loading ? "Sharing..." : "Share"
@@ -475,11 +591,11 @@ function ShareForm({ categoryid, categoryname, closureDate, finalClosuredate }) 
                     <ModalBody>
                         <div className="mx-1 mt-2">
                             <p className='flex mb-3 text-gray-700'>
-                                <span className='w-[200px] mr-1 font-bold'>Sharing closure date</span>
+                                <span className='w-[200px] mr-1 font-bold'>Idea closure date</span>
                                 <span>: {closureDate}</span>
                             </p>
                             <p className='flex text-gray-700'>
-                                <span className='w-[200px] mr-1 font-bold'>Commenting closure date</span>
+                                <span className='w-[200px] mr-1 font-bold'>Comment closure date</span>
                                 <span>: {finalClosuredate}</span>
                             </p>
                         </div>

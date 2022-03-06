@@ -61,6 +61,8 @@ import ModalFooter from "@material-tailwind/react/ModalFooter";
 import Button from '@material-tailwind/react/Button';
 import Icon from '@material-tailwind/react/Icon';
 
+// truncate
+import Truncate from 'react-truncate';
 
 // dummy data for visiblity status
 const visibility = [
@@ -311,6 +313,15 @@ function Post({id, idea}) {
             commentCount : increment_no,
         });
 
+        await addDoc(collection(db, "notification"), {
+            authorEmail : idea.staffEmail,
+            commenterEmail : user.email,
+            status: 0, // unseen status
+            type : 0, // for author and commenter
+            ideaID : cmtid, //for link
+            timestamp: serverTimestamp(),
+        });
+
         setLoading(false);
         setIsOpen(false);
         toast.success("Replied your comment", 
@@ -337,8 +348,9 @@ function Post({id, idea}) {
     
     const todayDate = month + "/" + day + "/" + year;
 
-    
-    
+    const now = new Date(new Date().toUTCString());
+
+
     return (
 
         <div className="mb-2">
@@ -347,7 +359,7 @@ function Post({id, idea}) {
             <div className="p-3 flex border-b border-gray-300">
                 
                 <div className='flex flex-col space-y-5 w-full'>
-            
+
                     {/* user info */}
                     <div className='flex justify-between'>
 
@@ -467,7 +479,11 @@ function Post({id, idea}) {
 
                     {/* caption and Image */}
                     <p className='text-gray-700 text-lg'>
+                    <Truncate lines={2}>
                         { idea.idea }
+                    </Truncate>
+
+                        
                         <NavLink
                             onClick={(e) => {
                                 e.stopPropagation();  
@@ -535,35 +551,38 @@ function Post({id, idea}) {
                             </span>
                         </div>
 
+                        {
+                            
+                        }
+
+
                         {/* comment */}
                         {
                             categories.map((category) => (
-                                todayDate < new Date(category.finalClosureDate.seconds*1000).toLocaleDateString() ? (
+                                todayDate > new Date(category.finalClosureDate.seconds*1000).toLocaleDateString() ? (
                                     <div 
-                                        onClick={() => {
-                                            setCmtid(id)
-                                            setIsOpen(true)
-                                            username.map((uname) => (
-                                                setAuthoremail(uname.staffEmail)
-                                            ))
-                                        }}
-                                        className='flex items-center space-x-1 group'
-                                        >
-                                            <div className='icon group-hover:bg-gray-500 group-hover:bg-opacity-10'>
-                                                <ChatIcon className='h-6 group-hover:text-gray-500'/>
-                                            </div>
-                                            {
-                                                comments.length > 0 ? (
-                                                    <span className='group-hover:text-gray-500 text-sm'>
-                                                        {comments.length}
-                                                    </span>
-                                                ) : (
-                                                    <span className='group-hover:text-gray-500 text-sm'>
-                                                        0
-                                                    </span>
-                                                )
-                                            }
-                                    </div>  
+                                    onClick={() => {
+                                        setCmtid(id)
+                                        setIsOpen(true)
+                                    }}
+                                    className='flex items-center space-x-1 group'
+                                    >
+                                        <div className='icon group-hover:bg-gray-500 group-hover:bg-opacity-10'>
+                                            <ChatIcon className='h-6 group-hover:text-gray-500'/>
+                                        </div>
+                                        {
+                                            comments.length > 0 ? (
+                                                <span className='group-hover:text-gray-500 text-sm'>
+                                                    {comments.length}
+                                                </span>
+                                            ) : (
+                                                <span className='group-hover:text-gray-500 text-sm'>
+                                                    0
+                                                </span>
+                                            )
+                                        }
+                                        
+                                    </div>
                                 ) : (
                                     <div className='flex items-center space-x-1 group'>
                                         <div className='icon group-hover:bg-red-700 group-hover:bg-opacity-20 relative'>
@@ -585,6 +604,7 @@ function Post({id, idea}) {
                                 )
                             ))
                         }
+
                         
 
                         {/* View icon */}
@@ -709,7 +729,9 @@ function Post({id, idea}) {
                                                     <Moment fromNow>{idea?.ideaDate?.toDate()}</Moment>
                                                 </span>
                                                 <p className='text-[#5c5c5c] text-[15px] sm:text-base'>
+                                                <Truncate lines={2}>
                                                     {idea?.idea}
+                                                </Truncate>
                                                 </p>
                                             </div>
                                         </div>
@@ -720,8 +742,6 @@ function Post({id, idea}) {
                                         </Avatar>
                                     
                                         <div className="flex-grow mt-2">
-                                            
-                                            
 
                                             <textarea
                                                 value={comment}

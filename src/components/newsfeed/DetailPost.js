@@ -1,6 +1,8 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Dialog, Transition, Listbox } from "@headlessui/react";
+// truncate
+import Truncate from 'react-truncate';
 
 import {
     ChatIcon,
@@ -300,6 +302,15 @@ function DetailPost({idea, id, staffEmail}) {
             commentCount : increment_no,
         });
 
+        await addDoc(collection(db, "notification"), {
+            authorEmail : idea.staffEmail,
+            commenterEmail : user.email,
+            status: 0, // unseen status
+            type : 0, // for author and commenter
+            ideaID : cmtid, //for link
+            timestamp: serverTimestamp(),
+        });
+
         setLoading(false);
         setIsOpen(false);
         toast.success("Replied your comment", 
@@ -471,7 +482,7 @@ function DetailPost({idea, id, staffEmail}) {
                     </div>
 
                     {/* caption and Image */}
-                    <p className='text-gray-700 text-lg'>
+                    <p className='text-gray-700 text-lg selection:bg-black selection:text-white'>
                         { idea.idea }
                     </p>
 
@@ -552,7 +563,7 @@ function DetailPost({idea, id, staffEmail}) {
                         {/* comment */}
                         {
                             categories.map((category) => (
-                                todayDate < new Date(category.finalClosureDate.seconds*1000).toLocaleDateString() ? (
+                                todayDate > new Date(category?.finalClosureDate?.seconds*1000).toLocaleDateString() ? (
                                     <div 
                                         onClick={() => {
                                             setCmtid(id)
@@ -655,8 +666,6 @@ function DetailPost({idea, id, staffEmail}) {
                             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         >
                             
-
-
                             <div className='inline-block align-bottom bg-[#f4f4f4] rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full'>
                                 
                                 <div className='flex items-center px-1.5 py-2 border-b border-gray-300'>
@@ -719,7 +728,9 @@ function DetailPost({idea, id, staffEmail}) {
                                                     <Moment fromNow>{idea?.ideaDate?.toDate()}</Moment>
                                                 </span>
                                                 <p className='text-[#5c5c5c] text-[15px] sm:text-base'>
-                                                    {idea?.idea}
+                                                    <Truncate lines={2}>
+                                                        { idea.idea }
+                                                    </Truncate> 
                                                 </p>
                                             </div>
                                         </div>

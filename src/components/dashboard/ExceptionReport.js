@@ -15,7 +15,7 @@ import Button from '@material-tailwind/react/Button';
 
 // For firebase
 import { 
-    collection, 
+    collection,  
     addDoc,
     getDocs, 
     serverTimestamp,
@@ -53,7 +53,6 @@ function ExceptionReport() {
     const [ nocmtideas, setNocmtideas] = useState([]);
     const [ ideaid, setIdeaid ] = useState(""); // for set id
     const [comments, setComments ] = useState([]); // comments
-    console.log(comments);
 
 
 
@@ -139,9 +138,6 @@ function ExceptionReport() {
                 pauseOnHover
             />
 
-            {
-
-            }
 
             <Card>
                 <CardHeader color="green" contentPosition="none">
@@ -312,22 +308,46 @@ function ExceptionReport() {
             </Card>
 
 
-            {/* add category modal */}
-            <Modal size="large" active={showModal} toggler={() => setShowModal(false)}>
+            {/* anonoymous idea modal */}
+            <Modal size="lg" active={showModal} toggler={() => setShowModal(false)}>
                 <ModalHeader toggler={() => setShowModal(false)}>
-                    <h2 className="flex item-center">
+                    <h5 className="flex item-center">
                         <Icon name="list" size="2xl"/> &nbsp; <span className="-mt-1"> Anonymous Comments </span>
-                    </h2>
+                    </h5>
                 </ModalHeader>
 
                 <ModalBody>
-                    {
-                        comments.map((cmt) => (
-                            <p>
-                                {cmt.comment}
-                            </p>
-                        ))
-                    }
+                <table className="items-center w-full bg-transparent border-collapse">
+                            <thead>
+                                <tr>
+                                    <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
+                                        Commenter Email
+                                    </th>
+                                    <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
+                                        Comment
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {
+                                    comments.length === 0 ? (
+                                        <h1 className='w-full text-gray-700 px-4 mt-3'>No anonymous comment!</h1>
+                                    )
+                                    :
+                                    comments.map((cmt) =>(
+                                        <tr>
+                                            <td className="border-b truncate w-[10px] border-gray-200 align-middle font-light text-sm whitespace-nowrap px-2 py-4 text-left">
+                                                {cmt.commenterEmail}
+                                            </td>
+                                            <td className="border-b border-gray-200 align-middle font-light text-sm px-2 py-4 text-left">
+                                                {cmt.comment}
+                                            </td>
+                                        </tr>   
+                                    ))
+                                }   
+                                
+                            </tbody>
+                        </table>
                 </ModalBody>
 
             </Modal>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState,Fragment } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../../components/dashboard/Footer';
 import Sidebar from '../../components/dashboard/Sidebar';
@@ -9,23 +9,15 @@ import CardHeader from '@material-tailwind/react/CardHeader';
 import CardBody from '@material-tailwind/react/CardBody';
 import Button from '@material-tailwind/react/Button';
 import {
-    UserIcon,
-    DotsHorizontalIcon,
-    TrendingUpIcon
+    ChevronDoubleUpIcon,
+    AnnotationIcon
 } from "@heroicons/react/outline";
-import { CheckIcon, SelectorIcon } from '@heroicons/react/solid';
-
 
 // For firebase
 import { 
     collection, 
-    addDoc,
-    getDocs, 
-    serverTimestamp,
     orderBy, 
     query,
-    deleteDoc,
-    doc,
     onSnapshot,
     where
 } from 'firebase/firestore';
@@ -35,9 +27,8 @@ import { selectUser } from '../../features/userSlice';
 import ChartComponent from '../../components/dashboard/ChartComponent';
 import BarChartComponent from '../../components/dashboard/BarChartComponent';
 import ExceptionReport from '../../components/dashboard/ExceptionReport';
-
-
-
+import DepartmentChart from '../../components/dashboard/DepartmentChart';
+import ContributorChart from '../../components/dashboard/ContributorChart';
 
 function Dashboard() { 
 
@@ -61,7 +52,30 @@ function Dashboard() {
     const [ categories, setCategories ] = useState([]);
     const [ ideas, setIdeas ] = useState([]);
     const [ expireds, setExpireds ]     = useState([]);
+    // The back-to-top button is hidden at the beginning
+    const [showButton, setShowButton] = useState(false);
+    const [ notis, setNotis ] = useState([]); // for qac notification
+    const [ qacdept, setQacdept ]= useState([]);
+    const [ lol, setLol ] = useState("");
 
+    // check current depth
+    useEffect(() => {
+        window.addEventListener("scroll", () => {
+          if (window.pageYOffset > 300) {
+            setShowButton(true);
+          } else {
+            setShowButton(false);
+          }
+        });
+      }, []);
+
+    //   scroll to top action
+    const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // for smoothly scrolling
+    });
+    };
 
     // retirve and display admin staffs
     useEffect(() =>{
@@ -138,6 +152,45 @@ function Dashboard() {
         )
     }, [db]);
 
+
+    // ------------------------  For QAC notification ----------
+
+    // qac deptarmnt from redux + firestore
+    useEffect(() =>{
+
+        onSnapshot(
+            query(collection(db, "adminStaff"), where("edubaseMail", "==", user.email)),
+            (snapshot) => {
+                setQacdept(snapshot.docs.map((doc) => ({
+                    ...doc.data(), id: doc.id
+                })));
+            }
+        );
+    
+    }, [db]);
+
+    useEffect(()=>{
+        qacdept.map((dept)=> (
+            setLol(dept.adminDepartment)
+        ))
+    }, [qacdept]);
+
+
+
+    // fetch notification 
+    useEffect(() => {
+        if(lol){
+            onSnapshot(
+                query(collection(db, "notification-2"), where("department", "==", lol), where("status", "==",0)),
+                    (snapshot) => {
+                        setNotis(snapshot.docs.map((doc) => ({
+                            ...doc.data(), id: doc.id
+                        })));
+                    }   
+                )
+        }
+    }, [lol]);
+
     
     // For closure dates
     const dateObj = new Date();
@@ -145,8 +198,6 @@ function Dashboard() {
     const day = dateObj.getUTCDate();
     const year = dateObj.getUTCFullYear();
     
-    const todayDate = month + "/" + day + "/" + year;
-
 
     return(
         <>
@@ -157,7 +208,7 @@ function Dashboard() {
                 {/* number counts */}
                 <div className='px-3 md:px-3 -mt-24'>
                     <div className='container mx-auto max-w-full'>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 mb-4">
+                        <div className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 mb-4 ${role === "qac" && "xl:grid-cols-3"}   `}>
 
                             {
                                 role === 'qam' && (
@@ -226,16 +277,29 @@ function Dashboard() {
                                             />
                                         </NavLink>
 
-                                        <NavLink to="/ideas" className="bg-transparent shadow-none">
+                                        <NavLink to="#" className="bg-transparent shadow-none">
                                             <StatusCard
                                                 color="green"
                                                 icon="light"
                                                 title="Performance"
                                                 amount="49,65%"
-                                                percentage="12"
+                                                percentage={ideas.length}
                                                 percentageIcon="arrow_upward"
                                                 percentageColor="green"
                                                 date="Ideas Posts"
+                                            />
+                                        </NavLink>
+
+                                        <NavLink to="/mails" className="bg-transparent shadow-none">
+                                            <StatusCard
+                                                color="pink"    
+                                                icon="email"
+                                                title="Notification"
+                                                amount="49,65%"
+                                                percentage={notis.length}
+                                                percentageIcon="arrow_upward"
+                                                percentageColor="green"
+                                                date="Mails"
                                             />
                                         </NavLink>
                                     </>
@@ -244,9 +308,45 @@ function Dashboard() {
                         </div>
                     </div>
                 </div>
-                
 
                 {/* Charts */}
+                {
+                    role === "qam" && (
+                        <div className="px-3 md:px-3 h-auto mt-5">
+                            <div className="container mx-auto max-w-full">
+                                <div className="grid grid-cols-1 xl:grid-cols-12">
+                                    <div className="xl:col-start-1 xl:col-end-6 px-4 mb-14">
+                                        <Card>
+                                            <CardHeader color="green" contentPosition="none">
+                                                <div className="w-full flex items-center justify-between">
+                                                    <h2 className="text-white text-2xl">Idea by each Department</h2>
+                                                </div>
+                                            </CardHeader>
+                                            <CardBody>
+                                                <DepartmentChart/>
+                                            </CardBody>
+                                        </Card>
+                                    </div>
+                                    <div className="xl:col-start-6 ml-3 xl:col-end-12 px-4 mb-14">
+                                        <Card>
+                                            <CardHeader color="orange" contentPosition="none">
+                                                <div className="w-full flex items-center justify-between">
+                                                    <h2 className="text-white text-2xl">Contributors per Department</h2>
+                                                </div>
+                                            </CardHeader>
+                                            <CardBody>
+                                                <ContributorChart/>
+                                            </CardBody>
+                                        </Card>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+
+
+                {/* Category chart & Community */}
                 <div className="px-3 md:px-3 h-auto mt-5">
                     <div className="container mx-auto max-w-full">
                         <div className="grid grid-cols-1 xl:grid-cols-12">
@@ -258,7 +358,7 @@ function Dashboard() {
                                         </div>
                                     </CardHeader>
                                     <CardBody>
-                                        <ChartComponent/>
+                                          <ChartComponent/>
                                     </CardBody>
                                 </Card>
                             </div>
@@ -277,73 +377,84 @@ function Dashboard() {
                         </div>
                     </div>
                 </div>
+                
+                {/* Expired catgories and Exception report */}
+                {
+                    role === "qam" && (
+                        <div className="px-3 md:px-3 h-auto mt-5">
+                            <div className="container mx-auto max-w-full">
+                                <div className="grid grid-cols-1 xl:grid-cols-5">
 
-                <div className="px-3 md:px-3 h-auto mt-5">
-                    <div className="container mx-auto max-w-full">
-                        <div className="grid grid-cols-1 xl:grid-cols-5">
+                                    {/* expired categories */}
+                                    <div className="xl:col-start-1 xl:col-end-12 px-4 mb-14">
+                                        <Card>
+                                            <CardHeader color="pink" contentPosition="none">
+                                                <div className="w-full flex items-center justify-between">
+                                                    <h2 className="text-white text-2xl">Expired Categories</h2>
+                                                </div>
+                                            </CardHeader>
+                                            <CardBody>
+                                                <div className="overflow-x-auto">
+                                                    <table className="items-center w-full bg-transparent border-collapse">
+                                                        <thead>
+                                                            <tr>
+                                                                <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
+                                                                    Category
+                                                                </th>
+                                                                <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
+                                                                    Description
+                                                                </th>
+                                                                <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
+                                                                    View
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {
+                                                                expireds.map((category) =>(
+                                                                        
+                                                                            <tr>
+                                                                                <td className="border-b border-gray-200 align-middle font-light text-sm whitespace-nowrap px-2 py-4 text-left">
+                                                                                    { category.categoryName }
+                                                                                </td>
+                                                                                <td className="border-b border-gray-200 align-middle font-light text-sm whitespace-nowrap px-2 py-4 text-left">
+                                                                                    { category.description }
+                                                                                </td>
+                                                                                <td className="border-b border-gray-200 align-middle font-light text-sm whitespace-nowrap px-2 py-4 text-left">
+                                                                                <NavLink to={{ pathname:'/ideas' }} state={{ cateid: category }}>
+                                                                                        <Button 
+                                                                                            color = "pink"
+                                                                                        >
+                                                                                            Export Ideas
+                                                                                        </Button>
+                                                                                </NavLink>
+                                                                                </td>
+                                                                            </tr>   
+                                                                ))
+                                                            }   
+                                                            
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </CardBody>
+                                        </Card>
+                                    </div>
+                                    
+                                    {/* Exception report */}
+                                    <ExceptionReport/>
+                                    
 
-                            {/* expired categories */}
-                            <div className="xl:col-start-1 xl:col-end-12 px-4 mb-14">
-                                <Card>
-                                    <CardHeader color="pink" contentPosition="none">
-                                        <div className="w-full flex items-center justify-between">
-                                            <h2 className="text-white text-2xl">Expired Categories</h2>
-                                        </div>
-                                    </CardHeader>
-                                    <CardBody>
-                                        <div className="overflow-x-auto">
-                                            <table className="items-center w-full bg-transparent border-collapse">
-                                                <thead>
-                                                    <tr>
-                                                        <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
-                                                            Category
-                                                        </th>
-                                                        <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
-                                                            Description
-                                                        </th>
-                                                        <th className="px-2 text-teal-500 align-middle border-b border-solid border-gray-200 py-3 text-sm whitespace-nowrap font-light text-left">
-                                                            View
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {
-                                                        expireds.map((category) =>(
-                                                                
-                                                                    <tr>
-                                                                        <td className="border-b border-gray-200 align-middle font-light text-sm whitespace-nowrap px-2 py-4 text-left">
-                                                                            { category.categoryName }
-                                                                        </td>
-                                                                        <td className="border-b border-gray-200 align-middle font-light text-sm whitespace-nowrap px-2 py-4 text-left">
-                                                                            { category.description }
-                                                                        </td>
-                                                                        <td className="border-b border-gray-200 align-middle font-light text-sm whitespace-nowrap px-2 py-4 text-left">
-                                                                        <NavLink to={{ pathname:'/ideas' }} state={{ cateid: category }}>
-                                                                                <Button 
-                                                                                    color = "pink"
-                                                                                >
-                                                                                    Export Ideas
-                                                                                </Button>
-                                                                        </NavLink>
-                                                                        </td>
-                                                                    </tr>   
-                                                        ))
-                                                    }   
-                                                    
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </CardBody>
-                                </Card>
+                                </div>
                             </div>
-                            
-                            {/* Exception report */}
-                            <ExceptionReport/>
-                            
-
                         </div>
-                    </div>
-                </div>
+                    )
+                }
+
+                {showButton && (
+                    <button onClick={scrollToTop} className="back-to-top fixed bottom-10 right-10 bg-black p-4 rounded hover:bg-gray-800">
+                        <ChevronDoubleUpIcon className="h-5 mr-1 text-white"/>
+                    </button>
+                )}
                 
             <Footer />
 

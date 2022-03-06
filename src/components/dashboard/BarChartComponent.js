@@ -81,10 +81,6 @@ function BarChartComponent() {
     }, [db]);
 
 
-
-
-
-
     // static labels
     const labels = [
         'QA Manager',

@@ -95,6 +95,8 @@ function DepartmentsTable() {
                 departmentName: deptname,
                 departmentDescription: desc,
                 departmentStatus: false,
+                ideaCount: 0,
+                contributor: 0,
                 timestamp: serverTimestamp(),
             }) 
 

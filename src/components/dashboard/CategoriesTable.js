@@ -113,7 +113,7 @@ function CategoriesTable() {
     // unpublish category
     const onUnpublish = async (id) => {
         const data = doc(db, 'category', id);
-        await updateDoc(data, { categoryStatus: 'Unpublished' })
+        await updateDoc(data, { categoryStatus: 'Unpublished', closureDate: null, finalClosureDate: null })
         .then(()=>{ 
             setLoading(false);
             toast.success("Category Unpublished", { 

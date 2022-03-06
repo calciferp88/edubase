@@ -2,6 +2,7 @@ import React, { useState, Fragment, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     ArrowLeftIcon,
+    ChevronDoubleUpIcon
 } from "@heroicons/react/outline";
 import { CheckIcon, SelectorIcon } from '@heroicons/react/solid';
 import Button from '@material-tailwind/react/Button';
@@ -42,10 +43,11 @@ const visibility = [
 function TrendingFeed() {
     
     const navigate = useNavigate();
-    const [ loading, setLoading ] = useState(false);
     const [ selectedVisibility, setSelectedVisiblity ] = useState(visibility[0]); // selectedVisiblity.name
 
     const [ ideas, setIdeas ] = useState([]); // newest ideas (default)
+     // The back-to-top button is hidden at the beginning
+     const [showButton, setShowButton] = useState(false);
 
     // for default sorting
     useEffect(() => {
@@ -136,9 +138,35 @@ function TrendingFeed() {
         navigate(-1);
     }
 
+    // check current depth
+    useEffect(() => {
+        window.addEventListener("scroll", () => {
+          if (window.pageYOffset > 300) {
+            setShowButton(true);
+          } else {
+            setShowButton(false);
+          }
+        });
+      }, []);
+
+    //   scroll to top action
+    const scrollToTop = () => {
+    window.scrollTo({
+        top: 0, 
+        behavior: 'smooth' // for smoothly scrolling
+    });
+    };
+
 
     return (
     <>
+
+        {/* scroll to top */}
+        {showButton && (
+            <button onClick={scrollToTop} className="back-to-top fixed bottom-10 right-10 bg-black p-4 rounded hover:bg-gray-800">
+                <ChevronDoubleUpIcon className="h-5 mr-1 text-white"/>
+            </button>
+        )}
         <div className="flex-grow flex-[0.4] border-l border-r border-gray-300 max-w-2xl sm:ml-[73px] xl:ml-[350px]">
 
             <ToastContainer 
@@ -166,10 +194,10 @@ function TrendingFeed() {
                     </h2>
                 </div>
 
-                <Listbox value={selectedVisibility} onChange={setSelectedVisiblity}>
+                <Listbox value={selectedVisibility} onChange={setSelectedVisiblity} >
                     <div className="relative">
 
-                        <Listbox.Button className="relative w-full py-2 pl-3 pr-10 text-left bg-white rounded-lg shadow-md cursor-default focus:outline-none focus-visible:ring-2 
+                        <Listbox.Button className="relative w-full py-2 pl-3 pr-10 text-left b g-white rounded-lg shadow-md cursor-default focus:outline-none focus-visible:ring-2 
                                                     focus-visible:ring-opacity-75 focus-visible:ring-white 
                                                     focus-visible:ring-offset-blue-300 focus-visible:ring-offset-2 
                                                     focus-visible:border-indigo-500 sm:text-sm"

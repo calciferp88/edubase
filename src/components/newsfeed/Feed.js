@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { HomeIcon, SearchIcon } from "@heroicons/react/solid";
+import { BellIcon } from "@heroicons/react/outline";
 import {
-    UserIcon,
+    ChevronDoubleUpIcon,
     PlusCircleIcon,
     LogoutIcon,
 } from "@heroicons/react/outline";
@@ -22,6 +23,7 @@ import ModalHeader from "@material-tailwind/react/ModalHeader";
 import ModalBody from "@material-tailwind/react/ModalBody";
 import ModalFooter from "@material-tailwind/react/ModalFooter";
 import Button from '@material-tailwind/react/Button';
+
 
 
 // import FlipMove from 'react-flip-move';
@@ -54,6 +56,8 @@ function Feed() {
     const [showModal2, setShowModal2] = useState(false); //confirmation dialog
     const [ ideas, setIdeas ] = useState([]);
     const [ categories, setCategories ] = useState([]);
+    // The back-to-top button is hidden at the beginning
+    const [showButton, setShowButton] = useState(false);
     // for last doc
     const [lastDoc, setLastDoc] = useState(null);
     const [empty, setEmpty] = useState(false);
@@ -61,6 +65,20 @@ function Feed() {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [ notifications, setNotifications ] = useState([]); // to count noti counts
+    // reterive own notification
+    useEffect(() =>{
+        if(user){
+            onSnapshot(
+                query(collection(db, "notification"), where("authorEmail", "==", user?.email), where("status", "==", 0)),
+                    (snapshot) => {
+                        setNotifications(snapshot.docs.map((doc) => ({
+                            ...doc.data(), id: doc.id
+                        })));
+                    }   
+                )
+        }
+    }, [db, user]);
 
 
     // Logout
@@ -69,6 +87,25 @@ function Feed() {
         auth.signOut();
         navigate('/login');
     }
+
+    // check current depth
+    useEffect(() => {
+        window.addEventListener("scroll", () => {
+          if (window.pageYOffset > 300) {
+            setShowButton(true);
+          } else {
+            setShowButton(false);
+          }
+        });
+      }, []);
+
+    //   scroll to top action
+    const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // for smoothly scrolling
+    });
+    };
 
 
     // reterive and display categories
@@ -119,6 +156,14 @@ function Feed() {
         )
     }
 
+    // For closure dates
+    const dateObj = new Date();
+    const month = dateObj.getUTCMonth() + 1; //months from 1-12
+    const day = dateObj.getUTCDate();
+    const year = dateObj.getUTCFullYear();
+    const todayDate = month + "/" + day + "/" + year;
+    
+
     return (
         <div className="flex-grow flex-[0.4] border-l border-r border-gray-300 max-w-2xl sm:ml-[73px] xl:ml-[350px]">
 
@@ -134,10 +179,16 @@ function Feed() {
                 draggable
                 pauseOnHover
             />
-
+            {/* scroll to top */}
+            {showButton && (
+                <button onClick={scrollToTop} className="back-to-top fixed bottom-10 right-10 bg-black p-4 rounded hover:bg-gray-800">
+                    <ChevronDoubleUpIcon className="h-5 mr-1 text-white"/>
+                </button>
+            )}
             {/* Header */}
             <div className="hidden lg:flex shadow-sm items-center sm:justify-between py-3 px-3 sticky top-0 z-10 border-b bg-white border-gray-300">
                 <h2 className="text-xl sm:text-xl font-semibold">Idea Feed</h2>
+                
                 <div className="w-9 h-9 flex items-center justify-center xl:px-0 ml-auto">
                     <NavLink to="/me">
                         <Avatar style={{ fontSize: '17px', width: 37, height: 37 }} className="mr-2.5 xl:ml-0 sm:ml-2 border-2 border-gray-50 uppercase hover:animate-bounce">
@@ -161,6 +212,12 @@ function Feed() {
                         setShowModal1(true)
                     }}
                 />
+                <NavLink exact to="/notifications" className="icon hover:animate-bounce relative">
+                    <BellIcon className='h-6'/>
+                    <span className='-top-1 left-2 absolute shadow-sm bg-pink-500 text-sm pt-[1px] w-[20px] h-[20px] text-center rounded-xl ml-2 text-white'>
+                         {notifications.length}
+                    </span>
+                </NavLink>
                 <Dropdown
                     color="transparent"
                     buttonText={
@@ -209,8 +266,8 @@ function Feed() {
                     {/* Idea categories */}
                     <div className='text-[#6E6E6E] space-y-3 bg-[#efefef] py-2 rounded-xl w-full'>
                         {
-                            categories.map((category) => {
-                                return (
+                            categories.map((category)=>(
+                                todayDate < new Date(category.closureDate.seconds*1000).toLocaleDateString() && (
                                     <NavLink to={{ pathname:'/share' }} state={{ sharecate: category }} >
                                         <div className='mb-2 hover:bg-gray-300 px-5 py-1 cursor-pointer transition duration-200 ease-out flex items-center justify-between'>
                                             <div className='space-y-0.5'>
@@ -222,7 +279,7 @@ function Feed() {
                                         </div>
                                     </NavLink>
                                 )
-                            })
+                            ))
                         }
                     </div>
                 </ModalBody>
