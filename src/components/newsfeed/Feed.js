@@ -110,8 +110,9 @@ function Feed() {
 
     // reterive and display categories
     useEffect(() =>{
+        const now = new Date(new Date().toUTCString());
         onSnapshot(
-        query(collection(db, "category"), where("categoryStatus", "==", "Published")),
+        query(collection(db, "category"), where("closureDate", ">", now)),
             (snapshot) => {
                 setCategories(snapshot.docs.map((doc) => ({
                     ...doc.data(), id: doc.id
@@ -267,18 +268,16 @@ function Feed() {
                     <div className='text-[#6E6E6E] space-y-3 bg-[#efefef] py-2 rounded-xl w-full'>
                         {
                             categories.map((category)=>(
-                                todayDate < new Date(category.closureDate.seconds*1000).toLocaleDateString() && (
-                                    <NavLink to={{ pathname:'/share' }} state={{ sharecate: category }} >
-                                        <div className='mb-2 hover:bg-gray-300 px-5 py-1 cursor-pointer transition duration-200 ease-out flex items-center justify-between'>
-                                            <div className='space-y-0.5'>
-                                                <h6 className='text-gray-700 text-md font-semibold'>{category.categoryName}</h6>
-                                                <p className='text-gray-700 max-w-[250px] text-[13px] block truncate'>
-                                                    {category.description}
-                                                </p>
-                                            </div>
+                                <NavLink to={{ pathname:'/share' }} state={{ sharecate: category }} >
+                                    <div className='mb-2 hover:bg-gray-300 px-5 py-1 cursor-pointer transition duration-200 ease-out flex items-center justify-between'>
+                                        <div className='space-y-0.5'>
+                                            <h6 className='text-gray-700 text-md font-semibold'>{category.categoryName}</h6>
+                                            <p className='text-gray-700 max-w-[250px] text-[13px] block truncate'>
+                                                {category.description}
+                                            </p>
                                         </div>
-                                    </NavLink>
-                                )
+                                    </div>
+                                </NavLink>  
                             ))
                         }
                     </div>
