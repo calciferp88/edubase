@@ -563,7 +563,7 @@ function DetailPost({idea, id, staffEmail}) {
                         {/* comment */}
                         {
                             categories.map((category) => (
-                                todayDate > new Date(category?.finalClosureDate?.seconds*1000).toLocaleDateString() ? (
+                                todayDate < new Date(category?.finalClosureDate?.seconds*1000).toLocaleDateString() ? (
                                     <div 
                                         onClick={() => {
                                             setCmtid(id)
