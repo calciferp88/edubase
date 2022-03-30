@@ -1,3 +1,9 @@
+## Prerequisite
+
+This project need node js version of 17.3.0 (currently) which can be downloaded at [nodejs.org]
+
+At least one CLI tools is needed to install and run this soruce code locally.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), using the [Redux](https://redux.js.org/) and [Redux Toolkit](https://redux-toolkit.js.org/) template.
 
 ## Available Scripts

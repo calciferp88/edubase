@@ -75,7 +75,7 @@ function Comment({id, comment}) {
                                     </span>
                                 ) : (
                                     <span className="ml-1.5 text-sm sm:text-[15px]">
-                                        anonymous@edubaes.edu{" "}
+                                        anonymous@edubase.edu{" "}
                                     </span>
                                 )
                             }

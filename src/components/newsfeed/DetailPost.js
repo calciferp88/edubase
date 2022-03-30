@@ -429,7 +429,7 @@ function DetailPost({idea, id, staffEmail}) {
                         {/* Dots icon */}
                         {
                             categories.map((category) => (
-                                todayDate < new Date(category.finalClosureDate.seconds*1000).toLocaleDateString() ? (
+                                todayDate < new Date(category?.finalClosureDate?.seconds*1000).toLocaleDateString() ? (
 
                                     user.email === idea?.staffEmail ?  (
                                         <div className='icon group flex-shrink-0 ml-auto'>

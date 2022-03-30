@@ -159,7 +159,7 @@ function AdminStaffsTable() {
             <Card>
                 <CardHeader color="orange" contentPosition="none">
                     <div className="w-full flex items-center justify-between">
-                        <h2 className="text-white text-2xl flex items-center"><UserGroupIcon className='h-6'/> &nbsp; Administartion staffs</h2>
+                        <h2 className="text-white text-2xl flex items-center"><UserGroupIcon className='h-6'/> &nbsp; Administration staffs</h2>
 
                         <Button
                             className="group"
